@@ -5,15 +5,15 @@ import (
 	"text/template"
 )
 
-type Action struct {
+type Notify struct {
 	ChatId   string `toml:"chat_id"`
 	Message  string `toml:"message"`
 	JobState string `toml:"job_state"`
 }
 
-func (a *Action) Template(object interface{}) (string, error) {
+func (n *Notify) Template(object interface{}) (string, error) {
 	var doc bytes.Buffer
-	t, err := template.New("text").Parse(a.Message)
+	t, err := template.New("text").Parse(n.Message)
 	if err != nil {
 		return "", err
 	}

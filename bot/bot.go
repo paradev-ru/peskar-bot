@@ -52,17 +52,17 @@ func (b *Bot) SuccessReceived(result []byte) error {
 	if err = json.Unmarshal(result, &job); err != nil {
 		return fmt.Errorf("Unmarshal error: %v (%s)", err, string(result))
 	}
-	for _, action := range b.config.Actions {
-		if regexp.MustCompile(action.JobState).FindString(job.State) == "" {
+	for _, notify := range b.config.NotifyList {
+		if regexp.MustCompile(notify.JobState).FindString(job.State) == "" {
 			continue
 		}
-		message, err := action.Template(job)
+		message, err := notify.Template(job)
 		if message == "" || err != nil {
 			continue
 		}
-		if action.ChatId != "" {
-			logrus.Debugf("%s. Send '%s' to %s", job.ID, message, action.ChatId)
-			err = b.client.SendTo(action.ChatId, message)
+		if notify.ChatId != "" {
+			logrus.Debugf("%s. Send '%s' to %s", job.ID, message, notify.ChatId)
+			err = b.client.SendTo(notify.ChatId, message)
 		} else {
 			logrus.Debugf("%s. Send '%s' to default chat", job.ID, message)
 			err = b.client.Send(message)

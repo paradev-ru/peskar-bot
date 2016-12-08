@@ -30,24 +30,18 @@ var (
 	redisAddr        string
 	redisIdleTimeout time.Duration
 	redisMaxIdle     int
-	configFile       = ""
+	configFile       string
 	printVersion     bool
 	telegramToken    string
 )
 
 type Config struct {
 	Telegram         telegram.Config `toml:"telegram"`
-	Actions          []*bot.Action   `toml:"actions"`
+	NotifyList       []*bot.Notify   `toml:"notify"`
 	RedisAddr        string          `toml:"-"`
 	RedisIdleTimeout time.Duration   `toml:"-"`
 	RedisMaxIdle     int             `toml:"-"`
 	LogLevel         string          `toml:"-"`
-}
-
-type Action struct {
-	ChatId   string `toml:"chat_id"`
-	Message  string `toml:"message"`
-	JobState string `toml:"job_state"`
 }
 
 func init() {
@@ -111,34 +105,34 @@ func initConfig() error {
 		return errors.New("Must specify Redis max idle using -redis-max-idle")
 	}
 
-	if len(config.Actions) == 0 {
-		return errors.New("Actions list cant be empty, check config file")
+	if len(config.NotifyList) == 0 {
+		return errors.New("Notify list cant be empty, check config file")
 	}
 
 	if config.Telegram.Enabled && config.Telegram.Token == "" {
 		return errors.New("Telegram enabled. Must specify token")
 	}
 
-	for id, action := range config.Actions {
-		if action.JobState == "" {
-			return fmt.Errorf("Action #%d Error: Must specify job_state", id)
+	for id, notify := range config.NotifyList {
+		if notify.JobState == "" {
+			return fmt.Errorf("Must specify notify[%d].job_state", id)
 		}
-		if _, err := regexp.Compile(action.JobState); err != nil {
-			return fmt.Errorf("Action #%d Error: %v", id, err)
+		if _, err := regexp.Compile(notify.JobState); err != nil {
+			return fmt.Errorf("%v in notify[%d].job_state", err, id)
 		}
-		if action.Message == "" {
-			return fmt.Errorf("Action #%d Error: Must specify message", id)
+		if notify.Message == "" {
+			return fmt.Errorf("Must specify notify[%d].message", id)
 		}
 		if config.Telegram.Enabled {
-			if config.Telegram.ChatId == "" && action.ChatId == "" {
-				return fmt.Errorf("Action #%d Error: Must specify chat_id", id)
+			if config.Telegram.ChatId == "" && notify.ChatId == "" {
+				return fmt.Errorf("Must specify notify[%d].chat_id or telegram.chat_id", id)
 			}
 		}
 	}
 
 	telegramConfig = config.Telegram
 	botConfig = bot.Config{
-		Actions:          config.Actions,
+		NotifyList:       config.NotifyList,
 		RedisAddr:        config.RedisAddr,
 		RedisIdleTimeout: config.RedisIdleTimeout,
 		RedisMaxIdle:     config.RedisMaxIdle,
@@ -152,9 +146,9 @@ func processEnv() {
 	if len(redisAddrEnv) > 0 {
 		config.RedisAddr = redisAddrEnv
 	}
-	token := os.Getenv("PESKAR_BOT_TELEGRAM_TOKEN")
-	if len(token) > 0 {
-		config.Telegram.Token = token
+	tokenEnd := os.Getenv("PESKAR_BOT_TELEGRAM_TOKEN")
+	if len(tokenEnd) > 0 {
+		config.Telegram.Token = tokenEnd
 	}
 }
 

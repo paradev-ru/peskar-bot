@@ -3,7 +3,7 @@ package bot
 import "time"
 
 type Config struct {
-	Actions          []*Action
+	NotifyList       []*Notify
 	RedisAddr        string
 	RedisIdleTimeout time.Duration
 	RedisMaxIdle     int
