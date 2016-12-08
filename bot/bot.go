@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	JobEventsChannel = "peskar.job.events"
-	JobLogChannel    = "peskar.job.logs"
+	JobEventsChannel = "job.events"
+	JobLogChannel    = "job.logs"
 )
 
 type Bot struct {
