@@ -56,10 +56,8 @@ func (r *RedisStore) Send(channel string, value interface{}) error {
 	if err != nil {
 		return err
 	}
-
 	conn := r.pool.Get()
 	defer conn.Close()
-
 	_, err = conn.Do("PUBLISH", channel, string(res))
 	return err
 }
@@ -75,13 +73,11 @@ type Subscribe struct {
 
 func (r *RedisStore) NewSubscribe(channel string) *Subscribe {
 	s := new(Subscribe)
-
 	s.pool = r.pool
 	s.Channel = channel
 	s.RetryingPolicyCallback = basicRetryingPolicyCallback
 	s.SuccessReceivedCallback = basicSuccessReveivedCallback
 	s.ConnectionEstablishedCallback = basicConnectionEstablishedCallback
-
 	return s
 }
 
@@ -92,17 +88,14 @@ WAIT:
 	for {
 		conn := s.pool.Get()
 		defer conn.Close()
-
 		psc := redis.PubSubConn{conn}
 		err := psc.Subscribe(s.Channel)
-
 		if conn.Err() == nil && err == nil && attempts > 0 {
 			attempts = 0
 			if err := s.ConnectionEstablishedCallback(time.Since(errStartTime)); err != nil {
 				return err
 			}
 		}
-
 		for {
 			switch v := psc.Receive().(type) {
 			case redis.Message:
@@ -128,7 +121,6 @@ WAIT:
 			}
 		}
 	}
-
 	return nil
 }
 
@@ -141,10 +133,8 @@ func basicRetryingPolicyCallback(attempts int, duration time.Duration) error {
 	if duration >= 30*time.Minute {
 		return errors.New("Redis connection refused for a 30 minutes, shutting down.")
 	}
-
 	logrus.Infof("Wait Redis for a 10 seconds (#%d, %v)", attempts, duration)
 	time.Sleep(10 * time.Second)
-
 	return nil
 }
 

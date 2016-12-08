@@ -9,22 +9,26 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/leominov/peskar-bot/bot"
-	"github.com/leominov/peskar-bot/telegram"
+	"github.com/leominov/peskar-bot/messengers"
+	"github.com/leominov/peskar-bot/messengers/empty"
+	"github.com/leominov/peskar-bot/messengers/telegram"
+)
+
+const (
+	BaseName = "peskar-bot"
 )
 
 var (
-	b              *bot.Bot
-	telegramClient *telegram.Client
+	b               *bot.Bot
+	messengerClient messengers.MessengerClient
 )
 
 func main() {
 	flag.Parse()
 	if printVersion {
-		fmt.Printf("peskar-bot %s\n", Version)
+		fmt.Printf("%s %s\n", BaseName, Version)
 		os.Exit(0)
 	}
-
-	logrus.Info("Starting peskar-bot")
 
 	if err := initConfig(); err != nil {
 		logrus.Fatal(err)
@@ -33,10 +37,13 @@ func main() {
 	doneChan := make(chan bool)
 
 	if telegramConfig.Enabled {
-		telegramClient = telegram.New(telegramConfig)
+		messengerClient = telegram.New(telegramConfig)
+	} else {
+		messengerClient = empty.New()
 	}
 
-	b = bot.New(telegramClient, botConfig)
+	logrus.Infof("Starting %s", BaseName)
+	b = bot.New(BaseName, messengerClient, botConfig)
 	if err := b.Validate(); err != nil {
 		logrus.Error(err)
 		os.Exit(1)

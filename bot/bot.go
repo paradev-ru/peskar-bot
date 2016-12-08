@@ -3,34 +3,51 @@ package bot
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/leominov/peskar-bot/telegram"
+	"github.com/leominov/peskar-bot/messengers"
 )
 
 const (
-	EventsChannel = "jobs"
+	JobEventsChannel = "peskar.job.events"
+	JobLogChannel    = "peskar.job.logs"
 )
 
 type Bot struct {
-	telegram *telegram.Client
-	redis    *RedisStore
-	config   Config
+	Name   string
+	client messengers.MessengerClient
+	redis  *RedisStore
+	config Config
 }
 
-func New(telegram *telegram.Client, config Config) *Bot {
+func New(name string, client messengers.MessengerClient, config Config) *Bot {
 	redis := NewRedis(config.RedisMaxIdle, config.RedisIdleTimeout, config.RedisAddr)
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "na"
+	}
 	return &Bot{
-		telegram: telegram,
-		config:   config,
-		redis:    redis,
+		Name:   fmt.Sprintf("%s-%s", name, hostname),
+		client: client,
+		config: config,
+		redis:  redis,
 	}
 }
 
+func (b *Bot) Log(jobID, message string) error {
+	l := JobLog{
+		Initiator: b.Name,
+		JobID:     jobID,
+		Message:   message,
+	}
+	return b.redis.Send(JobLogChannel, l)
+}
+
 func (b *Bot) SuccessReceived(result []byte) error {
-	var job Job
+	var job JobEntry
 	var err error
 	if err = json.Unmarshal(result, &job); err != nil {
 		return fmt.Errorf("Unmarshal error: %v (%s)", err, string(result))
@@ -49,13 +66,14 @@ func (b *Bot) SuccessReceived(result []byte) error {
 		}
 		if action.ChatId != "" {
 			logrus.Debugf("%s. Send '%s' to %s", job.ID, message, action.ChatId)
-			err = b.telegram.ChatSend(action.ChatId, message)
+			err = b.client.SendTo(action.ChatId, message)
 		} else {
 			logrus.Debugf("%s. Send '%s' to default chat", job.ID, message)
-			err = b.telegram.Send(message)
+			err = b.client.Send(message)
 		}
 		if err != nil {
 			logrus.Error(err)
+			b.Log(job.ID, err.Error())
 		}
 	}
 	return nil
@@ -75,7 +93,8 @@ func (b *Bot) Validate() error {
 }
 
 func (b *Bot) Process() error {
-	sub := b.redis.NewSubscribe(EventsChannel)
+	logrus.Info("Waiting for incoming events...")
+	sub := b.redis.NewSubscribe(JobEventsChannel)
 	sub.SuccessReceivedCallback = b.SuccessReceived
 	sub.RetryingPolicyCallback = b.RetryingPolicy
 	return sub.Run()

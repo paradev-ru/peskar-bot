@@ -91,9 +91,9 @@ func (c *Client) action(chatId, parseMode, message string, disableWebPagePreview
 }
 
 func (c *Client) Send(message string) error {
-	return c.action(c.chatId, c.parseMode, message, c.disableWebPagePreview, c.disableNotification)
+	return c.SendTo(c.chatId, message)
 }
 
-func (c *Client) ChatSend(chatId, message string) error {
-	return c.action(chatId, c.parseMode, message, c.disableWebPagePreview, c.disableNotification)
+func (c *Client) SendTo(to, message string) error {
+	return c.action(to, c.parseMode, message, c.disableWebPagePreview, c.disableNotification)
 }
