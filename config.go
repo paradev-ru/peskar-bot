@@ -3,8 +3,10 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -107,6 +109,31 @@ func initConfig() error {
 
 	if config.RedisMaxIdle == 0 {
 		return errors.New("Must specify Redis max idle using -redis-max-idle")
+	}
+
+	if len(config.Actions) == 0 {
+		return errors.New("Actions list cant be empty, check config file")
+	}
+
+	if config.Telegram.Enabled && config.Telegram.Token == "" {
+		return errors.New("Telegram enabled. Must specify token")
+	}
+
+	for id, action := range config.Actions {
+		if action.JobState == "" {
+			return fmt.Errorf("Action #%d Error: Must specify job_state", id)
+		}
+		if _, err := regexp.Compile(action.JobState); err != nil {
+			return fmt.Errorf("Action #%d Error: %v", id, err)
+		}
+		if action.Message == "" {
+			return fmt.Errorf("Action #%d Error: Must specify message", id)
+		}
+		if config.Telegram.Enabled {
+			if config.Telegram.ChatId == "" && action.ChatId == "" {
+				return fmt.Errorf("Action #%d Error: Must specify chat_id", id)
+			}
+		}
 	}
 
 	telegramConfig = config.Telegram

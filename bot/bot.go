@@ -53,11 +53,7 @@ func (b *Bot) SuccessReceived(result []byte) error {
 		return fmt.Errorf("Unmarshal error: %v (%s)", err, string(result))
 	}
 	for _, action := range b.config.Actions {
-		reg, err := regexp.Compile(action.JobState)
-		if err != nil {
-			continue
-		}
-		if reg.FindString(job.State) == "" {
+		if regexp.MustCompile(action.JobState).FindString(job.State) == "" {
 			continue
 		}
 		message, err := action.Template(job)
