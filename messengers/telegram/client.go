@@ -9,6 +9,7 @@ import (
 )
 
 type Client struct {
+	Name                  string
 	chatId                string
 	parseMode             string
 	disableWebPagePreview bool
@@ -18,6 +19,7 @@ type Client struct {
 
 func New(config Config) *Client {
 	return &Client{
+		Name:                  "Telegram",
 		chatId:                config.ChatId,
 		parseMode:             config.ParseMode,
 		disableWebPagePreview: config.DisableWebPagePreview,
@@ -88,6 +90,10 @@ func (c *Client) action(chatId, parseMode, message string, disableWebPagePreview
 
 	}
 	return nil
+}
+
+func (c *Client) GetName() string {
+	return c.Name
 }
 
 func (c *Client) Send(message string) error {

@@ -39,12 +39,14 @@ func (b *Bot) Log(jobID, message string) error {
 		JobID:     jobID,
 		Message:   message,
 	}
+	logrus.Infof("%s: %s", jobID, message)
 	return b.redis.Send(peskar.JobLogChannel, l)
 }
 
 func (b *Bot) SuccessReceived(result []byte) error {
 	var job peskar.Job
 	var err error
+	var counter int
 	if err = json.Unmarshal(result, &job); err != nil {
 		return fmt.Errorf("Unmarshal error: %v (%s)", err, string(result))
 	}
@@ -56,17 +58,24 @@ func (b *Bot) SuccessReceived(result []byte) error {
 		if message == "" || err != nil {
 			continue
 		}
+		counter++
+		if counter == 1 {
+			b.Log(job.ID, "Got a job")
+		}
 		if notify.ChatId != "" {
-			logrus.Debugf("%s. Send '%s' to %s", job.ID, message, notify.ChatId)
+			b.Log(job.ID, fmt.Sprintf("Sending message to %s (%s)...", b.client.GetName(), notify.ChatId))
 			err = b.client.SendTo(notify.ChatId, message)
 		} else {
-			logrus.Debugf("%s. Send '%s' to default chat", job.ID, message)
+			b.Log(job.ID, fmt.Sprintf("Sending message to %s...", b.client.GetName()))
 			err = b.client.Send(message)
 		}
 		if err != nil {
-			logrus.Error(err)
 			b.Log(job.ID, err.Error())
+			continue
 		}
+	}
+	if counter > 0 {
+		b.Log(job.ID, "Done")
 	}
 	return nil
 }

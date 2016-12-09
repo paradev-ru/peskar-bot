@@ -3,10 +3,17 @@ package empty
 import "github.com/Sirupsen/logrus"
 
 type Client struct {
+	Name string
 }
 
 func New() *Client {
-	return &Client{}
+	return &Client{
+		Name: "Empty",
+	}
+}
+
+func (c *Client) GetName() string {
+	return c.Name
 }
 
 func (c *Client) Send(message string) error {
