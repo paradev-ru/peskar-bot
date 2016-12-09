@@ -9,11 +9,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/leominov/peskar-bot/messengers"
-)
-
-const (
-	JobEventsChannel = "job.events"
-	JobLogChannel    = "job.logs"
+	"github.com/leominov/peskar-hub/peskar"
 )
 
 type Bot struct {
@@ -38,16 +34,16 @@ func New(name string, client messengers.MessengerClient, config Config) *Bot {
 }
 
 func (b *Bot) Log(jobID, message string) error {
-	l := JobLog{
+	l := peskar.LogItem{
 		Initiator: b.Name,
 		JobID:     jobID,
 		Message:   message,
 	}
-	return b.redis.Send(JobLogChannel, l)
+	return b.redis.Send(peskar.JobLogChannel, l)
 }
 
 func (b *Bot) SuccessReceived(result []byte) error {
-	var job JobEntry
+	var job peskar.Job
 	var err error
 	if err = json.Unmarshal(result, &job); err != nil {
 		return fmt.Errorf("Unmarshal error: %v (%s)", err, string(result))
@@ -90,7 +86,7 @@ func (b *Bot) Validate() error {
 
 func (b *Bot) Process() error {
 	logrus.Info("Waiting for incoming events...")
-	sub := b.redis.NewSubscribe(JobEventsChannel)
+	sub := b.redis.NewSubscribe(peskar.JobEventsChannel)
 	sub.SuccessReceivedCallback = b.SuccessReceived
 	sub.RetryingPolicyCallback = b.RetryingPolicy
 	return sub.Run()
