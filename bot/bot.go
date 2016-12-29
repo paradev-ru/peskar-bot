@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/leominov/peskar-bot/messengers"
-	"github.com/leominov/peskar-hub/peskar"
+	"github.com/paradev-ru/peskar-bot/messengers"
+	"github.com/paradev-ru/peskar-hub/peskar"
 )
 
 type Bot struct {

@@ -11,8 +11,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/Sirupsen/logrus"
-	"github.com/leominov/peskar-bot/bot"
-	"github.com/leominov/peskar-bot/messengers/telegram"
+	"github.com/paradev-ru/peskar-bot/bot"
+	"github.com/paradev-ru/peskar-bot/messengers/telegram"
 )
 
 const (

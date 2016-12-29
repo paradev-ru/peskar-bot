@@ -8,10 +8,10 @@ import (
 	"syscall"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/leominov/peskar-bot/bot"
-	"github.com/leominov/peskar-bot/messengers"
-	"github.com/leominov/peskar-bot/messengers/empty"
-	"github.com/leominov/peskar-bot/messengers/telegram"
+	"github.com/paradev-ru/peskar-bot/bot"
+	"github.com/paradev-ru/peskar-bot/messengers"
+	"github.com/paradev-ru/peskar-bot/messengers/empty"
+	"github.com/paradev-ru/peskar-bot/messengers/telegram"
 )
 
 const (
